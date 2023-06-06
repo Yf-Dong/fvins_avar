@@ -1,0 +1,73 @@
+%YAML:1.0 
+ 
+Veichle.Name: "test"
+Veichle.ImuNum: 1         
+Veichle.CamNum: 1  
+
+IMU.Topic:   /imu0
+IMU.Frequence: '100'
+
+Image0.Topic: "/cam0/image_raw"
+Image0.Width: 752
+Image0.Height: 480
+
+Image1.Topic: "/cam1/image_raw"
+Image1.Width: 752
+Image1.Height: 480
+
+OutputPath: "~/output/"
+
+Cam0.Calib: "cam0_mei.yaml"
+Cam1.Calib: "cam1_mei.yaml"
+
+# Extrinsic parameter between IMU and Camera.
+Sys.EstExtric: true   # 0  Have an accurate extrinsic parameters. We will trust the following imu^R_cam, imu^T_cam, don't change it.
+                        # 1  Have an initial guess about extrinsic parameters. We will optimize around your initial guess.
+
+Cam0.Extrinsic: !!opencv-matrix
+   rows: 4
+   cols: 4
+   dt: d
+   data: [0.0148655429818, -0.999880929698, 0.00414029679422, -0.0216401454975,
+           0.999557249008, 0.0149672133247, 0.025715529948,  -0.064676986768,
+           -0.0257744366974, 0.00375618835797, 0.999660727178, 0.00981073058949,
+           0, 0, 0, 1]
+
+Cam1.Extrinsic: !!opencv-matrix
+   rows: 4
+   cols: 4
+   dt: d
+   data: [0.0148655429818, -0.999880929698, 0.00414029679422, -0.0216401454975,0.999557249008, 0.0149672133247, 0.025715529948,  -0.064676986768,-0.0257744366974, 0.00375618835797, 0.999660727178, 0.00981073058949,0, 0, 0, 1]
+
+#Multiple thread support
+Sys.MultiThread: 1
+
+#feature traker paprameters
+Sys.MaxCnt: 150            # max feature number in feature tracking
+Sys.MinDist: 30            # min distance between two features
+Sys.Freq: 10                # frequence (Hz) of publish tracking result. At least 10Hz for good estimation. If set 0, the frequence will be same as raw image
+Sys.FThresh: 1.0        # ransac threshold (pixel)
+Sys.ShowTrack: 1           # publish tracking image as topic
+Sys.FlowBack: false         # perform forward and backward optical flow to improve feature tracking accuracy
+
+#optimization parameters
+Opt.MaxSolverT: 0.04  # max solver itration time (ms), to guarantee real time
+Opt.MaxNumIter: 8   # max solver itrations, to guarantee real time
+Opt.KeyframePara: 10.0 # keyframe selection threshold (pixel)
+
+#imu parameters       The more accurate parameters you provide, the better performance
+Imu.AccN: 0.1          # accelerometer measurement noise standard deviation.
+Imu.GyrN: 0.01         # gyroscope measurement noise standard deviation.
+Imu.AccW: 0.001        # accelerometer bias random work noise standard deviation.
+IMu.GyrW: 0.0001       # gyroscope bias random work noise standard deviation.
+Imu.Gnorm: 9.81007     # gravity magnitude
+
+#unsynchronization parameters
+Opt.EstimateTd: 0                     # online estimate time offset between camera and imu
+Sys.Td: 0.0                             # initial value of time offset. unit: s. readed image clock + td = real image clock (IMU clock)
+Sys.SaveImage: 1                   # save image in pose graph for visualization prupose; you can close this function by setting 0
+Sys.SaveOdom: 0
+
+#loop closure parameters
+Loop.LoadPrevPoseGraph: 0        # load and reuse previous pose graph; load from 'pose_graph_save_path'
+Loop.PoseGraphSavePath: "/home/duan/Datasets/euroc/MH_05_difficult/mav0/state_groundtruth_estimate0/fvinsEurocMono.csv" # save and load path
