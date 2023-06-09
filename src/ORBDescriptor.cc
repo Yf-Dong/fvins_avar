@@ -63,5 +63,6 @@ void ORBFeatureDescriptor::computeOrbDescriptor(const cv::KeyPoint &kpt, const c
 }
 
 
-REGISTER_FEATUREDESCRIPTOR(ORBFeatureDescriptor, orb)
+// REGISTER_FEATUREDESCRIPTOR(ORBFeatureDescriptor, orb)
+REGISTER_PLUGIN(FeatureDescriptor, ORBFeatureDescriptor, orb)
 }

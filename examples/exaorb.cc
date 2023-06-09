@@ -15,7 +15,7 @@ int main(int argc, char ** argv) {
   }
   SlamSystem test;
   // auto library = LIB_LOAD("libslam.so");
-  Fvins::FeatureExtractorPtr ptr = Fvins::ExtractorFactory::create("orb");
-  (*ptr)();
+  // Fvins::FeatureExtractorPtr ptr = Fvins::ExtractorFactory::create("orb");
+  // (*ptr)();
   return 0;
 }

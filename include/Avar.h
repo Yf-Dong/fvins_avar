@@ -25,11 +25,10 @@
 #define CONFIG_MAT
 #define CONFIG_IO
 
-#define avar AVAR::Avar::Instance()
 #define RegisterPtr(name, ptr) \
     class RegisterPtr##name { \
       public: \
-        RegisterPtr##name(){avar.insert(#name, ptr);} \
+        RegisterPtr##name(){avar.insertVoidPtr(#name, ptr);} \
     } RegisterPtr##name##_instance;
 
 namespace AVAR {
@@ -522,6 +521,8 @@ typename MatrixE<type>::MatType MatrixE<type>::toEigen(eigType &mat)
   return mat;
 }
 
+// Avar IO
+#define avar AVAR::Avar::Instance()
 class Avar CONFIG_IO
 {
 
@@ -559,7 +560,7 @@ class Avar CONFIG_IO
       return true;
   }
 
-  bool insert(const std::string &name, void* ptr){
+  bool insertVoidPtr(const std::string &name, void* ptr){
     if (mmPtr.find(name) == mmPtr.end()) {
       mmPtr[name] = ptr;
       return true;
@@ -665,6 +666,73 @@ MatrixE<callType> Avar::callMatrix(const std::string &name)
   return mat;
 }
 
+//Plugin Manager
+#ifndef SPtr
+#define SPtr std::shared_ptr
+#endif
+#ifndef UPtr
+#define UPtr std::unique_ptr
+#endif
+
+#define pluginManager AVAR::AvarPluginManager
+#define Plugin(type) AVAR::AvarPluginManager<SPtr<type>>
+
+#define REGISTER_PLUGIN(F, D, E) \
+  extern "C" SPtr<F> create##F##D##E() {return SPtr<F>(new D());}\
+  class F##D##E##_Register {\
+   public:\
+    F##D##E##_Register() {\
+    pluginManager<SPtr<F>>::instance().insert(#E, create##F##D##E);}\
+  } F##D##E##_instance;
+
+template<typename Var_Type = void *>
+class AvarPluginManager
+{
+ public:
+  typedef Var_Type (*createPlugin)() ;
+  typedef std::map<std::string, createPlugin>   DataMap;
+  typedef typename DataMap::iterator            DataIter;
+
+  AvarPluginManager(){};
+  static AvarPluginManager& instance()
+  {
+    static UPtr<AvarPluginManager> ptrManager(new AvarPluginManager);
+    return *ptrManager;
+  }
+
+  inline bool insert(const std::string &name, const createPlugin& var, bool overwrite = false)
+  {
+    std::cout << "plugin manager insert." << std::endl;
+    DataIter iter = mmFactory.find(name);
+    if (iter == mmFactory.end()) {
+      mmFactory.insert(std::pair<std::string, createPlugin>(name, var));
+      return true;
+    } else {
+      if (overwrite) iter->second = var;
+      return false;
+    }
+  }
+
+  static Var_Type create(const std::string &pluginName, std::string defaultP = "") 
+  {
+    DataMap datamap = AvarPluginManager<Var_Type>::instance().mmFactory;
+    DataIter iter = datamap.find(pluginName);
+    if (iter == datamap.end()) {
+      return nullptr;
+      if (defaultP.empty()) return nullptr;
+      else {
+        DataIter defaultIter = datamap.find(defaultP);
+        if (defaultIter == datamap.end()) return nullptr;
+        return defaultIter->second();
+      }
+    } else {
+      return iter->second();
+    }
+  }
+
+ public:
+  DataMap mmFactory;
+};
 
 } // namespace AVAR
 

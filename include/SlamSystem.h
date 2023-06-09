@@ -2,14 +2,16 @@
 #define SLAM_SYSTEM_H
 
 #include "FeatureExtractor.h"
-#include "FeatureDescriptor.h"
+#include "Avar.h"
 
 class SlamSystem
 {
  public:
+  typedef std::shared_ptr<Fvins::FeatureExtractor> FeatureExtractorPtr;
   SlamSystem();
+
  private:
-  Fvins::FeatureExtractorPtr mopOrbPtr;
+  FeatureExtractorPtr mopOrbPtr;
 };
 
 #endif

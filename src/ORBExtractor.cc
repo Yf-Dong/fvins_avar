@@ -68,6 +68,9 @@ void ExtractorNode::divideNode(ExtractorNode &n1, ExtractorNode &n2, ExtractorNo
 class OrbExtractor: public FeatureExtractor
 {
  public:
+  typedef std::shared_ptr<Fvins::FeatureDescriptor> FeatureDescriptorPtr;
+
+ public:
   OrbExtractor();
   virtual ~OrbExtractor() = default;
   bool operator() ( cv::InputArray image, cv::InputArray mask,std::vector<cv::KeyPoint>& keypoints, 
@@ -116,7 +119,7 @@ OrbExtractor::OrbExtractor() :
   miHalfPatchSize     (avar.call<int>   ("ORBextractor.halfPatchSize")),
   miEgdeTHreshold     (avar.call<int>   ("ORBextractor.EdgeThreshold")),
   miPatchSize         (avar.call<int>   ("ORBextractor.patchSize")),
-  mpFeatureDescriptor (DescriptorFactory::create("orb"))
+  mpFeatureDescriptor (Plugin(FeatureDescriptor)::create("orb"))
 {
   initPyramid();
   initExtractor();
@@ -586,7 +589,8 @@ std::vector<cv::KeyPoint> OrbExtractor::distributeOctTree(const std::vector<cv::
 
 
 
-REGISTER_FEATUREEXTRACTOR(OrbExtractor, orb)
+// REGISTER_FEATUREEXTRACTOR(OrbExtractor, orb)
+REGISTER_PLUGIN(FeatureExtractor, OrbExtractor, orb)
 
 } //namespace Fvins
 
