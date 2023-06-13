@@ -3,7 +3,9 @@
 #include <iostream>
 #include <thread>
 #include <list>
-#include "Avar.h"
+#include "Avar.hpp"
+#include "Messenger.hpp"
+#include "Time.h"
 
 namespace Fvins 
 {
@@ -108,6 +110,8 @@ class OrbExtractor: public FeatureExtractor
   std::vector<int>        mUmax;
 
   FeatureDescriptorPtr    mpFeatureDescriptor;
+
+  Messenger::ThreadPool   mThreadPool;
 }; 
 
 OrbExtractor::OrbExtractor() :
@@ -119,7 +123,8 @@ OrbExtractor::OrbExtractor() :
   miHalfPatchSize     (avar.call<int>   ("ORBextractor.halfPatchSize")),
   miEgdeTHreshold     (avar.call<int>   ("ORBextractor.EdgeThreshold")),
   miPatchSize         (avar.call<int>   ("ORBextractor.patchSize")),
-  mpFeatureDescriptor (Plugin(FeatureDescriptor)::create("orb"))
+  mpFeatureDescriptor (Plugin(FeatureDescriptor)::create("orb")),
+  mThreadPool         (size_t(float(mnLevels) / 2))
 {
   initPyramid();
   initExtractor();
@@ -196,7 +201,7 @@ bool OrbExtractor::operator() ( cv::InputArray _image, cv::InputArray _mask,
   std::vector<std::vector<cv::KeyPoint>> allKeyPoints;
   computeKeyPointsOctTree(allKeyPoints);
   
-  //FIXME.
+  //FIXME. if i don't need the descriptor
   // if (_descriptors.empty()) {
   //   for (int level = 0; level < mnLevels; ++level) {
   //     std::vector<cv::KeyPoint>& keypoints = allKeyPoints[level];
@@ -255,7 +260,7 @@ bool OrbExtractor::operator() ( cv::InputArray _image, cv::InputArray _mask,
   }
   cv::imshow("t", img);
   cv::waitKey(0);
-  std::cout << _descriptors.getMat() << std::endl;
+  // std::cout << _descriptors.getMat() << std::endl;
   return true;
 } 
 
@@ -263,11 +268,12 @@ void OrbExtractor::computeKeyPointsOctTree(std::vector<std::vector<cv::KeyPoint>
 {
   allKeyPoints.resize(mnLevels);
 
-  std::vector<std::thread> threads;
+  // Time t1 = Time::now();
+  // for (int i = 0; i < 1000; ++i){
+  std::vector<std::future<void>> results;
   for (int level = 0; level < mnLevels; ++level) {
-    // FastExtractor(level);
     cv::Mat &image = mvImagePyramid[level];
-    threads.emplace_back(std::thread([level, &image, &allKeyPoints, this]() {
+    results.push_back(mThreadPool.enqueue([level, &image, &allKeyPoints, this]() {
       const float W = 30;
       const int minBorderX = miEgdeTHreshold - 3;
       const int minBorderY = minBorderX;
@@ -326,10 +332,13 @@ void OrbExtractor::computeKeyPointsOctTree(std::vector<std::vector<cv::KeyPoint>
         kpt.octave = level;
         kpt.size = scaledPatchSize;
       }
-
     }));
   }
-  for (auto &t: threads) { t.join(); }
+  for (auto && result : results) {
+    result.get();
+  }
+  // Time t2 = Time::now();
+  // std::cout << "time: " << (t2 - t1).toSec() << std::endl;
 
   // std::cout << "thread done." << std::endl;
   // for (int i = 0;i < mnLevels; ++i) {

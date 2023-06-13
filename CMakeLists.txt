@@ -43,4 +43,4 @@ link_directories(${PROJECT_SOURCE_DIR}/thirdpart/yaml-cpp)
 # target_link_libraries(test ${OpenCV_LIBRARIES} ftime ${OpenCV_LIBRARIES})
 
 add_executable(test2 examples/exaorb.cc)
-target_link_libraries(test2 slam ${OpenCV_LIBRARIES} yaml-cpp) #dl
+target_link_libraries(test2 slam ${OpenCV_LIBRARIES} yaml-cpp -lpthread ftime) #dl

@@ -2,7 +2,7 @@
 #define SLAM_SYSTEM_H
 
 #include "FeatureExtractor.h"
-#include "Avar.h"
+#include "Avar.hpp"
 
 class SlamSystem
 {
